@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scam reklamy na Facebooku</title>
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+  :root {
+    --bg: #0a0d16;
+    --bg2: #121828;
+    --ink: #f4f6fb;
+    --muted: #8d97ad;
+    --red: #ff3b4f;
+    --yellow: #ffd23f;
+    --blue: #1877f2;
+    --card: #ffffff;
+    --card-ink: #1c1e21;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 100%; height: 100%; background: #000; overflow: hidden; }
+  body { display: grid; place-items: center; font-family: 'Inter', 'DejaVu Sans', sans-serif; color: var(--ink); }
+
+  /* 1080x1920 stage, scaled to fit the window in preview mode */
+  #stage {
+    position: relative; width: 1080px; height: 1920px; overflow: hidden;
+    background: radial-gradient(120% 70% at 50% 35%, var(--bg2) 0%, var(--bg) 70%);
+    transform-origin: center center;
+  }
+  .abs { position: absolute; }
+  .layer { position: absolute; inset: 0; will-change: opacity, transform; }
+  .center { left: 0; right: 0; text-align: center; }
+  .display { font-family: 'Archivo Black', 'DejaVu Sans', sans-serif; letter-spacing: -0.02em; line-height: 0.95; }
+  .num { white-space: nowrap; }
+  .kicker { font-weight: 800; font-size: 44px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .src { font-weight: 500; font-size: 30px; color: var(--muted); }
+  .hl { color: var(--yellow); }
+  .red { color: var(--red); }
+
+  /* background grain + vignette */
+  #grid {
+    position: absolute; inset: -200px;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 90px 90px;
+  }
+  #flash { position: absolute; inset: 0; background: var(--red); opacity: 0; mix-blend-mode: screen; }
+
+  /* progress bar */
+  #progress { position: absolute; top: 0; left: 0; height: 10px; background: var(--red); width: 0; }
+
+  /* ---------- Scene 1: fake ad ---------- */
+  #ad {
+    left: 140px; top: 560px; width: 800px; border-radius: 28px; background: var(--card); color: var(--card-ink);
+    box-shadow: 0 40px 120px rgba(0,0,0,0.55); overflow: hidden;
+  }
+  #ad .head { display: flex; align-items: center; gap: 22px; padding: 30px 32px 18px; }
+  #ad .avatar { width: 76px; height: 76px; border-radius: 50%; background: linear-gradient(135deg,#f5b400,#e8710a); display:grid; place-items:center; color:#fff; font-weight:800; font-size:34px; }
+  #ad .name { font-weight: 800; font-size: 32px; }
+  #ad .sp { font-weight: 500; font-size: 26px; color: #65676b; }
+  #ad .body { padding: 0 32px 22px; font-weight: 500; font-size: 32px; line-height: 1.3; }
+  #ad .img {
+    height: 380px; background: linear-gradient(160deg,#0f9d58 0%,#0b6b3c 100%);
+    display: grid; place-items: center; color: #fff; text-align: center;
+  }
+  #ad .img .big { font-family: 'Archivo Black', sans-serif; font-size: 96px; line-height: 1; }
+  #ad .img .small { font-weight: 700; font-size: 34px; opacity: 0.9; margin-top: 12px; }
+  #ad .cta { display:flex; justify-content: space-between; align-items:center; padding: 24px 32px; background:#f0f2f5; }
+  #ad .cta .u { font-size: 24px; color:#65676b; font-weight:500; }
+  #ad .cta .btn { background: var(--blue); color:#fff; font-weight:800; font-size:28px; padding: 16px 30px; border-radius: 12px; }
+  #stamp {
+    left: 230px; top: 820px; width: 620px; padding: 18px 0; text-align: center;
+    border: 14px solid var(--red); color: var(--red); border-radius: 24px;
+    font-family: 'Archivo Black', sans-serif; font-size: 170px; line-height: 1;
+    background: rgba(10,13,22,0.15);
+  }
+
+  /* ---------- Scene 2: $16 mld ---------- */
+  #bar { left: 140px; width: 800px; top: 1300px; height: 64px; border-radius: 32px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  #barFill { height: 100%; width: 0; background: var(--red); border-radius: 32px; }
+  #barLabels { left: 140px; width: 800px; top: 1384px; display: flex; justify-content: space-between; font-weight: 700; font-size: 32px; color: var(--muted); }
+
+  /* ---------- Scene 3: 15 mld dziennie ---------- */
+  #dots { left: 90px; top: 1150px; width: 900px; height: 420px; display: grid; grid-template-columns: repeat(20, 1fr); gap: 14px; }
+  #dots i { display: block; aspect-ratio: 1; border-radius: 8px; background: rgba(255,255,255,0.08); }
+  #dots i.on { background: var(--red); box-shadow: 0 0 24px rgba(255,59,79,0.7); }
+
+  /* ---------- Scene 4: Polska ---------- */
+  #flag { left: 390px; top: 300px; width: 300px; height: 190px; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+  #flag div { height: 50%; }
+  #donut { left: 290px; top: 1130px; width: 500px; height: 500px; }
+
+  /* ---------- Scene 5: straty ---------- */
+  .coin {
+    position: absolute; width: 110px; height: 110px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe680, #e0a800 70%);
+    border: 6px solid #b88600; color: #7a5600; display: grid; place-items: center;
+    font-family: 'Archivo Black', sans-serif; font-size: 34px;
+  }
+
+  /* ---------- Scene 6: outro ---------- */
+  .rule { display: flex; align-items: center; gap: 30px; font-family: 'Archivo Black', sans-serif; font-size: 78px; }
+  .rule b { display: grid; place-items: center; width: 110px; height: 110px; border-radius: 26px; background: var(--red); color: #fff; font-size: 64px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="grid"></div>
+
+  <!-- Scene 1 -->
+  <div class="layer" id="s1">
+    <div class="abs center display" id="s1t1" style="top:170px;font-size:104px;">ILE FACEBOOK<br>ZARABIA NA</div>
+    <div class="abs center display red" id="s1t2" style="top:395px;font-size:116px;">OSZUSTWACH?</div>
+    <div class="abs" id="ad">
+      <div class="head">
+        <div class="avatar">₿</div>
+        <div><div class="name">Inwestuj z Gwiazdą</div><div class="sp">Sponsorowane · 🌐</div></div>
+      </div>
+      <div class="body">Zainwestuj tylko 800 zł i zarabiaj nawet 15 000 zł miesięcznie! 🚀 Bank tego nienawidzi…</div>
+      <div class="img"><div><div class="big">+1 800%</div><div class="small">GWARANTOWANY ZYSK</div></div></div>
+      <div class="cta"><span class="u">SUPER-ZYSK.ONLINE</span><span class="btn">Zarejestruj się</span></div>
+    </div>
+    <div class="abs" id="stamp">SCAM</div>
+  </div>
+
+  <!-- Scene 2 -->
+  <div class="layer" id="s2">
+    <div class="abs center kicker" id="s2k" style="top:380px;">Meta · prognoza na 2024 r.</div>
+    <div class="abs center display hl num" id="s2n" style="top:540px;font-size:210px;">$16 mld</div>
+    <div class="abs center display" id="s2s" style="top:830px;font-size:62px;line-height:1.15;">z reklam oszustw<br>i zakazanych produktów</div>
+    <div class="abs" id="bar"><div id="barFill"></div></div>
+    <div class="abs" id="barLabels"><span class="red">≈10% przychodu</span><span>cały przychód Meta</span></div>
+    <div class="abs center src" id="s2src" style="top:1500px;">Wewnętrzne dokumenty Meta · Reuters, XI 2025</div>
+  </div>
+
+  <!-- Scene 3 -->
+  <div class="layer" id="s3">
+    <div class="abs center kicker" id="s3k" style="top:380px;">Codziennie użytkownicy widzą</div>
+    <div class="abs center display red num" id="s3n" style="top:520px;font-size:250px;">15 mld</div>
+    <div class="abs center display" id="s3s" style="top:850px;font-size:62px;line-height:1.15;">reklam scamowych<br>„wysokiego ryzyka”</div>
+    <div class="abs" id="dots"></div>
+    <div class="abs center src" id="s3src" style="top:1640px;">Dokument Meta z XII 2024 · Reuters</div>
+  </div>
+
+  <!-- Scene 4 -->
+  <div class="layer" id="s4">
+    <div class="abs" id="flag"><div style="background:#fff"></div><div style="background:#dc143c"></div></div>
+    <div class="abs center display" id="s4t" style="top:540px;font-size:110px;">A W POLSCE?</div>
+    <div class="abs center kicker" id="s4k" style="top:720px;">Meta mogła zarobić rocznie</div>
+    <div class="abs center display hl num" id="s4n" style="top:810px;font-size:170px;">760 mln zł</div>
+    <div class="abs center display" id="s4s" style="top:1010px;font-size:52px;">na oszukańczych reklamach</div>
+    <svg class="abs" id="donut" viewBox="0 0 100 100">
+      <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="14"/>
+      <circle id="donutArc" cx="50" cy="50" r="40" fill="none" stroke="#ff3b4f" stroke-width="14"
+              stroke-dasharray="0 251.33" transform="rotate(-90 50 50)" stroke-linecap="butt"/>
+      <text x="50" y="49" text-anchor="middle" font-family="Archivo Black" font-size="19" fill="#f4f6fb" id="donutTxt">&gt;1/3</text>
+      <text x="50" y="62" text-anchor="middle" font-family="Inter" font-weight="700" font-size="6.2" fill="#8d97ad">przychodów Mety</text>
+      <text x="50" y="70" text-anchor="middle" font-family="Inter" font-weight="700" font-size="6.2" fill="#8d97ad">w Polsce</text>
+    </svg>
+    <div class="abs center src" id="s4src" style="top:1680px;">Szacunek: Fundacja Instrat, 2026</div>
+  </div>
+
+  <!-- Scene 5 -->
+  <div class="layer" id="s5">
+    <div id="coins"></div>
+    <div class="abs center kicker" id="s5k" style="top:560px;">Polacy w 2025 r. stracili</div>
+    <div class="abs center display red num" id="s5n" style="top:700px;font-size:168px;">750+ mln zł</div>
+    <div class="abs center display" id="s5s" style="top:930px;font-size:60px;">na oszustwach w sieci</div>
+    <div class="abs center display" id="s5d" style="top:1140px;font-size:72px;line-height:1.2;">to ok. <span class="hl">2 mln zł</span><br>KAŻDEGO DNIA</div>
+    <div class="abs center src" id="s5src" style="top:1520px;">Dane NBP za 2025 r.</div>
+  </div>
+
+  <!-- Scene 6 -->
+  <div class="layer" id="s6">
+    <div class="abs center display" id="s6t" style="top:300px;font-size:84px;line-height:1.1;">REKLAMA OBIECUJE<br><span class="hl">PEWNY ZYSK?</span></div>
+    <div class="abs center display red" id="s6t2" style="top:540px;font-size:140px;">TO SCAM.</div>
+    <div class="abs" style="left:170px;top:810px;display:grid;gap:44px;">
+      <div class="rule" id="r1"><b>✕</b>Nie klikaj</div>
+      <div class="rule" id="r2"><b>!</b>Zgłaszaj</div>
+      <div class="rule" id="r3"><b>♥</b>Ostrzeż bliskich</div>
+    </div>
+    <div class="abs center src" id="s6src" style="top:1330px;line-height:1.5;">Źródła: Reuters (XI 2025), Fundacja Instrat (2026), NBP (2025)</div>
+  </div>
+
+  <div id="flash"></div>
+  <div id="progress"></div>
+</div>
+
+<script>
+(() => {
+  const DURATION = 25;           // seconds
+  const $ = (id) => document.getElementById(id);
+
+  // ---------- easing & tween helpers ----------
+  const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const ease = {
+    out: (x) => 1 - Math.pow(1 - x, 3),
+    inOut: (x) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2),
+    back: (x) => { const c1 = 2.2, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); },
+    in: (x) => x * x * x,
+  };
+  // progress of t through [start, start+dur], eased
+  const p = (t, start, dur, fn = ease.out) => fn(clamp((t - start) / dur));
+  const lerp = (a, b, k) => a + (b - a) * k;
+
+  // Enter/exit helper: slides+fades an element in at `inAt` and out at `outAt`.
+  function enter(el, t, inAt, outAt, { dy = 60, dx = 0, s0 = 1, dur = 0.55, fn = ease.out } = {}) {
+    const a = p(t, inAt, dur, fn);
+    const b = p(t, outAt - 0.3, 0.3, ease.in); // finish exiting before the next scene enters
+    const o = a * (1 - b);
+    const y = lerp(dy, 0, a) - 40 * b;
+    const x = lerp(dx, 0, a);
+    const s = lerp(s0, 1, a);
+    el.style.opacity = o;
+    el.style.transform = `translate(${x}px, ${y}px) scale(${s})`;
+  }
+  const show = (el, on) => { el.style.display = on ? '' : 'none'; };
+
+  // Polish number formatting
+  const fmt = (n) => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+  // ---------- static setup ----------
+  const dots = $('dots');
+  const DOTS = 160;
+  // deterministic pseudo-random order for lighting dots
+  const order = Array.from({ length: DOTS }, (_, i) => i).sort((a, b) => ((a * 73) % 97) - ((b * 73) % 97));
+  const dotEls = Array.from({ length: DOTS }, () => { const i = document.createElement('i'); dots.appendChild(i); return i; });
+
+  const coinsEl = $('coins');
+  const COINS = 14;
+  const coins = Array.from({ length: COINS }, (_, i) => {
+    const c = document.createElement('div');
+    c.className = 'coin'; c.textContent = 'zł';
+    coinsEl.appendChild(c);
+    return { el: c, x: 60 + ((i * 397) % 880), delay: (i * 0.23) % 2.6, speed: 900 + ((i * 131) % 500), rot: ((i * 53) % 360) };
+  });
+
+  // ---------- scene timings (s) ----------
+  const S = {
+    s1: [0, 3.4],
+    s2: [3.4, 8.2],
+    s3: [8.2, 12.4],
+    s4: [12.4, 17.2],
+    s5: [17.2, 21.4],
+    s6: [21.4, DURATION],
+  };
+  const inScene = (t, [a, b]) => t >= a - 0.05 && t < b + 0.05;
+
+  function render(t) {
+    $('progress').style.width = `${(t / DURATION) * 100}%`;
+    $('grid').style.transform = `translate(${-(t * 12) % 90}px, ${-(t * 20) % 90}px)`;
+
+    // flash on scene cuts that land on a "hit"
+    const hits = [1.55, S.s3[0] + 0.3, S.s5[0] + 0.35];
+    let f = 0;
+    for (const h of hits) f = Math.max(f, t >= h ? 0.35 * (1 - clamp((t - h) / 0.25)) : 0);
+    $('flash').style.opacity = f;
+
+    // shake after stamp
+    const shakeK = t >= 1.55 ? Math.max(0, 1 - (t - 1.55) / 0.35) : 0;
+    $('stage').dataset.shake = shakeK;
+    const shake = shakeK ? `translate(${Math.sin(t * 90) * 14 * shakeK}px, ${Math.cos(t * 77) * 10 * shakeK}px)` : '';
+
+    // ---- Scene 1
+    let [a, b] = S.s1;
+    show($('s1'), inScene(t, S.s1));
+    if (inScene(t, S.s1)) {
+      $('s1').style.transform = shake;
+      enter($('s1t1'), t, 0.05, b, { dy: -50 });
+      enter($('s1t2'), t, 0.25, b, { dy: 0, s0: 1.4, fn: ease.back });
+      enter($('ad'), t, 0.35, b, { dy: 260 });
+      const st = p(t, 1.4, 0.18, ease.in);
+      const so = st * (1 - p(t, b - 0.3, 0.3, ease.in));
+      $('stamp').style.opacity = so;
+      $('stamp').style.transform = `rotate(-14deg) scale(${lerp(2.6, 1, st)})`;
+      // ad desaturates after being stamped
+      $('ad').style.filter = `grayscale(${p(t, 1.55, 0.4)}) brightness(${1 - 0.35 * p(t, 1.55, 0.4)})`;
+    }
+
+    // ---- Scene 2
+    [a, b] = S.s2;
+    show($('s2'), inScene(t, S.s2));
+    if (inScene(t, S.s2)) {
+      enter($('s2k'), t, a + 0.0, b);
+      enter($('s2n'), t, a + 0.15, b, { dy: 0, s0: 0.6, fn: ease.back });
+      const v = lerp(0, 16, p(t, a + 0.15, 1.6, ease.out));
+      $('s2n').textContent = `$${Math.round(v)} mld`;
+      enter($('s2s'), t, a + 0.7, b);
+      enter($('bar'), t, a + 1.2, b, { dy: 30 });
+      enter($('barLabels'), t, a + 1.4, b, { dy: 30 });
+      $('barFill').style.width = `${10 * p(t, a + 1.5, 1.0, ease.inOut)}%`;
+      enter($('s2src'), t, a + 1.8, b, { dy: 20 });
+    }
+
+    // ---- Scene 3
+    [a, b] = S.s3;
+    show($('s3'), inScene(t, S.s3));
+    if (inScene(t, S.s3)) {
+      enter($('s3k'), t, a, b);
+      enter($('s3n'), t, a + 0.15, b, { dy: 0, s0: 1.6, fn: ease.back });
+      const v = lerp(0, 15, p(t, a + 0.15, 1.3));
+      $('s3n').textContent = `${Math.round(v)} mld`;
+      enter($('s3s'), t, a + 0.6, b);
+      enter($('dots'), t, a + 0.8, b, { dy: 40 });
+      const lit = Math.floor(DOTS * p(t, a + 1.0, 2.2, ease.inOut));
+      for (let i = 0; i < DOTS; i++) dotEls[order[i]].className = i < lit ? 'on' : '';
+      enter($('s3src'), t, a + 1.2, b, { dy: 20 });
+    }
+
+    // ---- Scene 4
+    [a, b] = S.s4;
+    show($('s4'), inScene(t, S.s4));
+    if (inScene(t, S.s4)) {
+      enter($('flag'), t, a, b, { dy: -80 });
+      $('flag').style.transform += ` rotate(${Math.sin(t * 3) * 2}deg)`;
+      enter($('s4t'), t, a + 0.15, b, { dy: 0, s0: 1.3, fn: ease.back });
+      enter($('s4k'), t, a + 0.8, b);
+      enter($('s4n'), t, a + 0.95, b, { dy: 0, s0: 0.6, fn: ease.back });
+      $('s4n').textContent = `${fmt(lerp(0, 760, p(t, a + 0.95, 1.4)))} mln zł`;
+      enter($('s4s'), t, a + 1.3, b);
+      enter($('donut'), t, a + 1.7, b, { dy: 40, s0: 0.8 });
+      const k = p(t, a + 1.9, 1.2, ease.inOut);
+      const C = 2 * Math.PI * 40;
+      const frac = 0.36 * k;
+      $('donutArc').setAttribute('stroke-dasharray', `${C * frac} ${C}`);
+      enter($('s4src'), t, a + 2.2, b, { dy: 20 });
+    }
+
+    // ---- Scene 5
+    [a, b] = S.s5;
+    show($('s5'), inScene(t, S.s5));
+    if (inScene(t, S.s5)) {
+      enter($('s5k'), t, a, b);
+      enter($('s5n'), t, a + 0.2, b, { dy: 0, s0: 0.5, fn: ease.back });
+      const v = lerp(0, 750, p(t, a + 0.2, 1.5));
+      $('s5n').textContent = `${fmt(v)}${v >= 749.5 ? '+' : ''} mln zł`;
+      enter($('s5s'), t, a + 0.7, b);
+      enter($('s5d'), t, a + 1.6, b, { dy: 50 });
+      enter($('s5src'), t, a + 2.0, b, { dy: 20 });
+      // coins falling and draining
+      const ct = t - a;
+      const fade = 1 - p(t, b - 0.3, 0.3, ease.in);
+      for (const c of coins) {
+        const lt = ct - c.delay;
+        if (lt < 0) { c.el.style.opacity = 0; continue; }
+        const y = -150 + ((lt * c.speed) % 2200);
+        c.el.style.opacity = 0.3 * fade;
+        c.el.style.transform = `translate(${c.x}px, ${y}px) rotate(${c.rot + lt * 220}deg)`;
+      }
+    }
+
+    // ---- Scene 6
+    [a, b] = S.s6;
+    show($('s6'), inScene(t, S.s6));
+    if (inScene(t, S.s6)) {
+      enter($('s6t'), t, a, b + 1);
+      enter($('s6t2'), t, a + 0.6, b + 1, { dy: 0, s0: 1.6, fn: ease.back });
+      enter($('r1'), t, a + 1.1, b + 1, { dy: 0, dx: -120 });
+      enter($('r2'), t, a + 1.35, b + 1, { dy: 0, dx: -120 });
+      enter($('r3'), t, a + 1.6, b + 1, { dy: 0, dx: -120 });
+      enter($('s6src'), t, a + 2.0, b + 1, { dy: 20 });
+    }
+  }
+
+  // ---------- modes ----------
+  // ?capture → frame-by-frame rendering driven by window.seek(t) (used by render.mjs)
+  const capture = new URLSearchParams(location.search).has('capture');
+  window.DURATION = DURATION;
+  window.seek = (t) => render(t);
+
+  if (capture) {
+    document.body.style.display = 'block';
+    render(0);
+  } else {
+    const stage = $('stage');
+    const fit = () => {
+      const k = Math.min(innerWidth / 1080, innerHeight / 1920);
+      stage.style.transform = `scale(${k})`;
+    };
+    addEventListener('resize', fit); fit();
+    let t0 = null;
+    const loop = (now) => {
+      if (t0 === null) t0 = now;
+      render(((now - t0) / 1000) % DURATION);
+      requestAnimationFrame(loop);
+    };
+    document.fonts.ready.then(() => requestAnimationFrame(loop));
+  }
+})();
+</script>
+</body>
+</html>
